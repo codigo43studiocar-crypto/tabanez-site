@@ -1,0 +1,91 @@
+{
+  "home": {
+    "badge": "Carlos Alberto Tabanez",
+    "titulo": "TABANEZ",
+    "subtitulo": "",
+    "trajetoria": {
+      "titulo": "Uma trajetória construída com trabalho",
+      "cards": [
+        {
+          "titulo": "Segurança pública",
+          "texto": "Policial Civil aposentado, atuou na Divisão de Operações Especiais (DOE), treinou milhares de operadores e recebeu diversas condecorações."
+        },
+        {
+          "titulo": "Projetos sociais",
+          "texto": "À frente de ações sociais e iniciativas como o atendimento a famílias vulneráveis e projetos comunitários em várias regiões do DF."
+        },
+        {
+          "titulo": "O Incansável Tabanez",
+          "texto": "Reconhecido pelo ritmo intenso de visitas, agendas lotadas e presença constante nas ruas, ouvindo de perto as demandas da população."
+        }
+      ]
+    },
+    "acoes": {
+      "titulo": "Últimas ações",
+      "cards": [
+        {
+          "titulo": "Fiscalização na saúde",
+          "texto": "Visitas em hospitais e UPAs para ouvir profissionais e pacientes."
+        },
+        {
+          "titulo": "Defesa das comunidades",
+          "texto": "Articulação com lideranças locais para destravar melhorias nas cidades."
+        },
+        {
+          "titulo": "Atenção às famílias",
+          "texto": "Apoio direto a famílias em vulnerabilidade e ações sociais contínuas."
+        }
+      ]
+    }
+  },
+  "biografia": {
+    "titulo": "Quem é Carlos Tabanez",
+    "introducao": "",
+    "secoes": [
+      {
+        "id": "origens-formacao",
+        "titulo": "Origens e formação",
+        "texto": "Tabanez teve uma trajetória profissional sólida antes de entrar para a vida pública. Formou-se em Química, fez especializações na área, atuou como professor e sempre esteve envolvido com trabalho voluntário e formação de pessoas."
+      },
+      {
+        "id": "carreira-policia",
+        "titulo": "Carreira na Polícia Civil",
+        "texto": "Na Polícia Civil do DF, Tabanez atuou em unidades estratégicas, incluindo a Divisão de Operações Especiais (DOE). Foi instrutor, participou de operações de alto risco e ajudou a formar milhares de profissionais de segurança pública."
+      },
+      {
+        "id": "empreendedorismo-cacs",
+        "titulo": "Empreendedorismo e defesa dos CACs",
+        "texto": "Empresário e instrutor, Tabanez participou da criação de clubes e projetos ligados ao esporte de tiro, defendendo o uso responsável de armas, o esporte e os direitos dos CACs, sempre com foco na legalidade e na segurança."
+      },
+      {
+        "id": "origem-incansavel",
+        "titulo": "A origem de “O Incansável Tabanez”",
+        "texto": "Durante a campanha de 2018, o ritmo intenso de reuniões, visitas e agendas fez com que a equipe passasse a chamá-lo de 'O Incansável Tabanez'. A expressão virou marca, associada ao trabalho contínuo e à presença constante nas ruas."
+      },
+      {
+        "id": "trajetoria-politica",
+        "titulo": "Trajetória política",
+        "texto": "Em 2018, pelo PROS, Tabanez recebeu mais de oito mil votos e ficou na suplência, assumindo por período limitado e apresentando projetos e indicações. Em 2022, pelo MDB, cresceu em votação e se consolidou como liderança conhecida nas regiões administrativas."
+      },
+      {
+        "id": "mandato-fiscalizacao",
+        "titulo": "Mandato e fiscalização",
+        "texto": "Mesmo fora do mandato completo, Tabanez se destacou por fiscalizar hospitais, UPAs e serviços públicos, ouvir servidores e usuários, cobrar providências do poder público e apresentar projetos voltados à melhoria da qualidade de vida no DF."
+      },
+      {
+        "id": "projetos-sociais",
+        "titulo": "Projetos sociais e Instituto INCIDE",
+        "texto": "À frente do Instituto INCIDE e de iniciativas como o projeto Visão Para Todos, Tabanez ajudou a levar atendimento, exames e óculos para milhares de pessoas, além de apoiar ações sociais e campanhas solidárias em diversas regiões do Distrito Federal."
+      },
+      {
+        "id": "bandeiras-compromisso",
+        "titulo": "Bandeiras e compromisso",
+        "texto": "As principais bandeiras de Tabanez são a segurança pública, a defesa da família, a geração de emprego e renda, a transparência no uso do dinheiro público e a atenção às comunidades mais simples. Sua marca é a energia que gera oportunidades e o compromisso de não abandonar o povo."
+      }
+    ]
+  },
+  "propostas": {
+    "titulo": "Propostas",
+    "subtitulo": ""
+  }
+}

@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+
+const DATA_PATH = path.join(process.cwd(), "data", "galeria.json");
+
+function load() {
+  try {
+    if (!fs.existsSync(DATA_PATH)) return [];
+    return JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+  } catch {
+    return [];
+  }
+}
+
+function save(list) {
+  fs.writeFileSync(DATA_PATH, JSON.stringify(list, null, 2));
+}
+
+export async function POST(req) {
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
+
+  const list = load();
+  const index = list.findIndex((i) => i.id === id);
+  if (index === -1) return NextResponse.json({ views: 0 });
+
+  list[index].views = (list[index].views || 0) + 1;
+  save(list);
+
+  return NextResponse.json({ views: list[index].views });
+}

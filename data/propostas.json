@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1",
+    "categoria": "Saúde",
+    "titulo": "Fortalecer a atenção básica na saúde",
+    "subtitulo": "Levar médico, remédio e estrutura para quem mais precisa nas cidades e regiões mais afastadas.",
+    "bullets": [
+      "Ampliar o horário de funcionamento dos postos de saúde.",
+      "Garantir estoque de medicamentos essenciais.",
+      "Reforçar equipes de agentes comunitários de saúde."
+    ],
+    "prioridade": "Alta",
+    "destaque": true,
+    "publicado": true,
+    "ordem": 1
+  },
+  {
+    "id": "2",
+    "categoria": "Educação",
+    "titulo": "Apoio aos estudantes da rede pública",
+    "subtitulo": "Criar condições para que os alunos permaneçam na escola e tenham desempenho melhor.",
+    "bullets": [
+      "Fortalecer programas de reforço escolar.",
+      "Ampliar oferta de cursos técnicos gratuitos.",
+      "Apoiar transporte escolar em regiões mais afastadas."
+    ],
+    "prioridade": "Média",
+    "destaque": false,
+    "publicado": true,
+    "ordem": 1
+  }
+]
