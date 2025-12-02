@@ -213,7 +213,7 @@ export default function AdminPropostasPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">
               Propostas de Carlos Tabanez
             </h1>
-            <p className="text-sm text-gray-600 max-w-2xl">
+            <p className="text-sm text-gray-200 max-w-2xl">
               Organize as propostas por categoria, prioridade e destaque. Os
               tópicos são exibidos como lista de itens na página pública.
             </p>

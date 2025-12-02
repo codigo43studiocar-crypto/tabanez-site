@@ -234,7 +234,7 @@ export default function AdminImprensaPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">
               Releases de imprensa
             </h1>
-            <p className="text-sm text-gray-600 max-w-2xl">
+            <p className="text-sm text-gray-200 max-w-2xl">
               Cadastre matérias oficiais da campanha com imagem, texto completo,
               categoria, vídeo, destaque e, se quiser, link para o Instagram.
             </p>

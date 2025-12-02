@@ -262,7 +262,7 @@ export default function AdminGaleria() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-dark">
               Gerenciar Galeria (Fotos e Vídeos)
             </h1>
-            <p className="text-sm text-neutral-600 max-w-2xl">
+            <p className="text-sm text-neutral-200 max-w-2xl">
               Atualize a galeria do Tabanez com fotos, vídeos e descrições de ações, eventos, visitas e fiscalizações.
             </p>
           </div>

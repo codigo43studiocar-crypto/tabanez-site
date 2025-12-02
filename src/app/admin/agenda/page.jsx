@@ -142,7 +142,7 @@ export default function AdminAgendaPage() {
       <div className="max-w-5xl mx-auto space-y-8">
         <header>
           <h1 className="text-3xl font-bold mb-1">Agenda – Administração</h1>
-          <p className="text-gray-700 text-sm md:text-base">
+          <p className="text-gray-200 text-sm md:text-base">
             Aqui você pode adicionar, editar e excluir os compromissos de Tabanez.
           </p>
         </header>

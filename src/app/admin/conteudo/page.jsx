@@ -188,7 +188,7 @@ export default function AdminConteudoPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">
             Editar textos principais
           </h1>
-          <p className="text-sm text-gray-600 max-w-2xl">
+          <p className="text-sm text-gray-200 max-w-2xl">
             Ajuste os textos exibidos na página inicial, biografia e propostas
             sem precisar alterar o código.
           </p>
