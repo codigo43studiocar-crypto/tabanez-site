@@ -179,7 +179,7 @@ export default function AdminConteudoPage() {
   const propostasSecoes = dados.propostas?.secoes || [];
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="p-6">
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <header>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-dark">

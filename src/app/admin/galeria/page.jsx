@@ -250,7 +250,7 @@ export default function AdminGaleria() {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-8">
+    <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* HEADER */}
