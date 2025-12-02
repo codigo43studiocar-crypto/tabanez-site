@@ -1,14 +1,11 @@
 import "./globals.css";
 import Header from "../components/Header";
-import FloatingActions from "@/components/FloatingActions";
+import FloatingActions from "../components/FloatingActions";
 
 export const metadata = {
   title: "Tabanez",
   description: "Site político com notícias automáticas.",
 };
-
-const WHATSAPP_LINK =
-  "https://wa.me/5561992815222?text=Ol%C3%A1%2C%20gostaria%20de%20falar%20com%20a%20equipe%20do%20Tabanez."; // TROCAR PELO NÚMERO REAL
 
 export default function RootLayout({ children }) {
   const anoAtual = new Date().getFullYear();
@@ -17,7 +14,6 @@ export default function RootLayout({ children }) {
     <html lang="pt-BR">
       <body className="bg-neutral-bg text-neutral-dark">
         <Header />
-        
 
         {/* CONTEÚDO PRINCIPAL */}
         <main className="min-h-[70vh] pt-24 pb-8">{children}</main>
@@ -48,7 +44,6 @@ export default function RootLayout({ children }) {
                   className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
                   aria-label="Instagram"
                 >
-                  {/* Ícone Instagram */}
                   <span className="text-lg">📸</span>
                 </a>
                 <a
@@ -81,17 +76,8 @@ export default function RootLayout({ children }) {
           </div>
         </footer>
 
-        {/* BOTÃO FLUTUANTE WHATSAPP */}
-        <a
-          href={WHATSAPP_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-green-500 text-white shadow-lg px-4 py-2 hover:bg-green-600 transition text-sm md:text-base"
-          aria-label="Falar com a equipe pelo WhatsApp"
-        >
-          <span className="text-xl">💬</span>
-          <span className="hidden md:inline font-semibold">Fale pelo WhatsApp</span>
-        </a>
+        {/* BOTÕES FLUTUANTES (Propostas, Agenda, Notícias, Imprensa, WhatsApp) */}
+        <FloatingActions />
       </body>
     </html>
   );
