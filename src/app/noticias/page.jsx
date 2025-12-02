@@ -1,7 +1,14 @@
+export const dynamic = "force-dynamic"; // impede erro de pre-render no Render
+
 async function getNews() {
-  const res = await fetch("http://localhost:3000/api/noticias", {
-    next: { revalidate: 120 },
+  const res = await fetch("/api/noticias", {
+    cache: "no-store",
   });
+
+  if (!res.ok) {
+    return [];
+  }
+
   return res.json();
 }
 
@@ -16,26 +23,9 @@ export default async function Noticias() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {news.map((item) => (
-          <article
-            key={item.link}
-            className="bg-white rounded-card shadow-card border border-gray-100 flex flex-col"
-          >
-            <div className="p-5 flex-1 flex flex-col">
-              <h2 className="font-semibold text-base md:text-lg text-gray-900">
-                {item.title}
-              </h2>
-              <p className="mt-3 text-sm text-gray-700 max-h-32 overflow-hidden">
-                {item.description.replace(/<[^>]+>/g, "")}
-              </p>
-              <p className="mt-3 text-xs text-gray-500">{item.date}</p>
-              <a
-                href={item.link}
-                target="_blank"
-                className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-light transition"
-              >
-                Ler Completa →
-              </a>
-            </div>
+          <article key={item.id} className="p-4 border rounded shadow">
+            <h2 className="text-xl font-semibold mb-2">{item.titulo}</h2>
+            <p className="text-gray-700">{item.resumo}</p>
           </article>
         ))}
       </div>
