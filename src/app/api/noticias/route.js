@@ -1,63 +1,61 @@
 import { NextResponse } from "next/server";
 
-// Remove tags HTML e espaços extras
-function stripHtml(html = "") {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export async function GET() {
   try {
     const rssURL = "https://g1.globo.com/rss/g1/politica/";
-    const response = await fetch(rssURL, { cache: "no-store" });
-
-    if (!response.ok) {
-      return NextResponse.json([]);
-    }
-
+    const response = await fetch(rssURL);
     const xml = await response.text();
 
     const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map(
-      (match, index) => {
+      (match, idx) => {
         const block = match[1];
 
         const getTag = (tag) => {
-          const regex = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`);
-          const r = block.match(regex);
-          if (!r) return "";
-          const raw = r[1]
-            .replace("<![CDATA[", "")
-            .replace("]]>", "")
-            .trim();
-          return raw;
+          const r = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`);
+          const m = block.match(r);
+          if (!m) return "";
+          // remove CDATA
+          return m[1].replace(/<!\[CDATA\[|\]\]>/g, "").trim();
         };
 
-        const rawTitle = getTag("title");
-        const rawDesc = getTag("description");
+        // descrição vinda do G1, limpando imagens e tags HTML
+        let description = getTag("description") || "";
+        description = description
+          .replace(/<img[^>]*>/gi, " ") // tira imagens
+          .replace(/<\/?[^>]+(>|$)/g, " ") // tira o resto das tags
+          .replace(/\s+/g, " ") // limpa espaços extras
+          .trim();
 
-        const titulo = stripHtml(rawTitle);
-        const descLimpa = stripHtml(rawDesc);
-        const resumo =
-          descLimpa.length > 260
-            ? descLimpa.slice(0, 260) + "..."
-            : descLimpa;
+        // data formatada
+        const rawDate = getTag("pubDate");
+        let date = "";
+        if (rawDate) {
+          const d = new Date(rawDate);
+          if (!isNaN(d.getTime())) {
+            date = d.toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          } else {
+            date = rawDate;
+          }
+        }
 
         return {
-          id: index + 1,
-          titulo,
+          id: getTag("guid") || getTag("link") || String(idx),
+          title: getTag("title"),
           link: getTag("link"),
-          resumo,
+          date,
+          description,
         };
       }
     );
 
+    // traz só as 12 primeiras
     return NextResponse.json(items.slice(0, 12));
-  } catch (err) {
-    console.error("Erro RSS:", err);
+  } catch (e) {
+    console.error("Erro ao buscar RSS", e);
     return NextResponse.json([]);
   }
 }
