@@ -1,102 +1,85 @@
-// src/app/admin/page.jsx
-"use client";
-
 import Link from "next/link";
 
-const CARDS = [
-  {
-    title: "Agenda",
-    desc: "Gerencie os compromissos oficiais, reuniões e visitas.",
-    href: "/admin/agenda",
-    status: "ATIVO",
-  },
-  {
-    title: "Propostas",
-    desc: "Cadastre, edite e organize as propostas por tema e prioridade.",
-    href: "/admin/propostas",
-    status: "ATIVO",
-  },
-  {
-    title: "Imprensa",
-    desc: "Cadastre releases, marque destaques, filtre por ano e acompanhe visualizações.",
-    href: "/admin/imprensa",
-    status: "ATIVO",
-  },
-  {
-    title: "Galeria",
-    desc: "Envie fotos, organize por álbuns e destaque ações importantes.",
-    href: "/admin/galeria",
-    status: "ATIVO",
-  },
-  {
-    title: "Conteúdo do site",
-    desc: "Ajuste textos da home, biografia e seções fixas sem precisar de código.",
-    href: "/admin/conteudo",
-    status: "ATIVO",
-  },
-  {
-    title: "Configurações",
-    desc: "Ajustes avançados (em breve): usuários, permissões e integrações.",
-    href: "#",
-    status: "EM BREVE",
-  },
-];
-
-export default function AdminHomePage() {
+export default function AdminDashboard() {
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
-          Painel ▸ Início
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-neutral-50">
-          Início do painel administrativo
-        </h1>
-        <p className="text-sm text-neutral-300 max-w-2xl">
-          Use os atalhos abaixo para atualizar o site sem depender de código.
-          Agenda, propostas, imprensa, galeria e textos principais estão
-          centralizados aqui.
-        </p>
-      </header>
+    <div className="min-h-screen bg-[#0b0f19] text-white p-6">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* CABEÇALHO */}
+        <header>
+          <h1 className="text-3xl font-bold mb-1">Painel Administrativo</h1>
+          <p className="text-gray-300 text-sm md:text-base">
+            Bem-vindo(a)! Use os atalhos abaixo para gerenciar o site do Tabanez.
+          </p>
+        </header>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {CARDS.map((card) => (
-          <div
-            key={card.title}
-            className="rounded-2xl border border-neutral-800 bg-gradient-to-br from-neutral-900 to-neutral-950 p-4 md:p-5 flex flex-col justify-between shadow-lg shadow-black/40"
+        {/* GRID DE ATALHOS */}
+        <section className="grid md:grid-cols-2 gap-4">
+          {/* AGENDA */}
+          <Link
+            href="/admin/agenda"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
           >
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.25em] text-neutral-500">
-                {card.title}
-              </p>
-              <p className="text-sm md:text-base text-neutral-100 font-medium">
-                {card.desc}
-              </p>
-            </div>
+            <h2 className="font-semibold text-lg mb-1">Agenda</h2>
+            <p className="text-sm text-neutral-700">
+              Adicione, edite e exclua os compromissos do Tabanez.
+            </p>
+          </Link>
 
-            <div className="mt-4 flex items-center justify-between">
-              <span
-                className={[
-                  "px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide",
-                  card.status === "ATIVO"
-                    ? "bg-amber-300/90 text-neutral-900"
-                    : "bg-neutral-700 text-neutral-100",
-                ].join(" ")}
-              >
-                {card.status}
-              </span>
+          {/* PROPOSTAS */}
+          <Link
+            href="/admin/propostas"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
+          >
+            <h2 className="font-semibold text-lg mb-1">Propostas</h2>
+            <p className="text-sm text-neutral-700">
+              Gerencie as propostas em destaque que aparecem no site.
+            </p>
+          </Link>
 
-              {card.href !== "#" && (
-                <Link
-                  href={card.href}
-                  className="px-4 py-1.5 rounded-full text-xs bg-emerald-500 text-white font-semibold hover:bg-emerald-400 shadow-md shadow-emerald-500/40"
-                >
-                  Acessar
-                </Link>
-              )}
-            </div>
-          </div>
-        ))}
+          {/* IMPRENSA */}
+          <Link
+            href="/admin/imprensa"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
+          >
+            <h2 className="font-semibold text-lg mb-1">Imprensa</h2>
+            <p className="text-sm text-neutral-700">
+              Cadastre releases oficiais, matérias e comunicados.
+            </p>
+          </Link>
+
+          {/* GALERIA */}
+          <Link
+            href="/admin/galeria"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
+          >
+            <h2 className="font-semibold text-lg mb-1">Galeria</h2>
+            <p className="text-sm text-neutral-700">
+              Gerencie fotos e vídeos que aparecem na galeria do site.
+            </p>
+          </Link>
+
+          {/* CONTEÚDO FIXO */}
+          <Link
+            href="/admin/conteudo"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
+          >
+            <h2 className="font-semibold text-lg mb-1">Textos do site</h2>
+            <p className="text-sm text-neutral-700">
+              Edite os textos principais da home e da biografia.
+            </p>
+          </Link>
+
+          {/* BACKUP / APOIO (OPCIONAL) */}
+          <Link
+            href="/admin/backup"
+            className="block bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-5 hover:shadow-md hover:-translate-y-[1px] transition"
+          >
+            <h2 className="font-semibold text-lg mb-1">Backup / Consultas</h2>
+            <p className="text-sm text-neutral-700">
+              Área de apoio para consultas ou funções internas (se você estiver usando).
+            </p>
+          </Link>
+        </section>
       </div>
     </div>
   );

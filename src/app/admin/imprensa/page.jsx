@@ -1,248 +1,299 @@
-// src/app/admin/imprensa/page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
 
-const CATEGORIAS = ["Ação social", "Reunião", "Fiscalização", "Evento", "Outros"];
-
-function novoRelease() {
-  return {
-    id: Date.now(),
-    data: "",
-    titulo: "",
-    categoria: "",
-    resumo: "",
-    textoCompleto: "",
-    destaque: false,
-  };
-}
-
 export default function AdminImprensaPage() {
-  const [releases, setReleases] = useState([]);
+  const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
+  const [editandoId, setEditandoId] = useState(null);
+
+  const [form, setForm] = useState({
+    titulo: "",
+    subtitulo: "",
+    categoria: "",
+    data: "",
+    publicado: true,
+    imagem: "",
+    texto: "",
+  });
+
+  async function carregar() {
+    setCarregando(true);
+    try {
+      const res = await fetch("/api/imprensa");
+      const dados = await res.json();
+      setLista(dados || []);
+    } catch {
+      setErro("Erro ao carregar releases.");
+    } finally {
+      setCarregando(false);
+    }
+  }
 
   useEffect(() => {
-    async function carregar() {
-      setCarregando(true);
-      try {
-        const res = await fetch("/api/imprensa", { cache: "no-store" });
-        const json = await res.json();
-        setReleases(json.releases || []);
-      } catch (e) {
-        console.error(e);
-        setErro("Erro ao carregar releases de imprensa.");
-      } finally {
-        setCarregando(false);
-      }
-    }
     carregar();
   }, []);
 
-  function atualizarRelease(index, campo, valor) {
-    setReleases((prev) => {
-      const copia = [...prev];
-      copia[index] = { ...copia[index], [campo]: valor };
-      return copia;
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  }
+
+  function limpar() {
+    setEditandoId(null);
+    setForm({
+      titulo: "",
+      subtitulo: "",
+      categoria: "",
+      data: "",
+      publicado: true,
+      imagem: "",
+      texto: "",
     });
   }
 
-  function adicionarRelease() {
-    setReleases((prev) => [...prev, novoRelease()]);
-  }
-
-  function removerRelease(index) {
-    if (!window.confirm("Remover este release?")) return;
-    setReleases((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function salvarTudo() {
+  async function salvar(e) {
+    e.preventDefault();
     setErro("");
-    setSucesso("");
     setSalvando(true);
 
     try {
+      const metodo = editandoId ? "PUT" : "POST";
+      const body = { ...form, id: editandoId };
+
       const res = await fetch("/api/imprensa", {
-        method: "POST",
+        method: metodo,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ releases }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setErro(data.error || "Erro ao salvar releases.");
+        const d = await res.json().catch(() => ({}));
+        setErro(d.error || "Erro ao salvar.");
         return;
       }
 
-      setSucesso("Releases salvos com sucesso.");
-    } catch (e) {
-      console.error(e);
-      setErro("Erro de comunicação com o servidor.");
+      await carregar();
+      limpar();
+    } catch {
+      setErro("Erro ao comunicar com o servidor.");
     } finally {
       setSalvando(false);
     }
   }
 
+  function editar(item) {
+    setEditandoId(item.id);
+    setForm({
+      titulo: item.titulo || "",
+      subtitulo: item.subtitulo || "",
+      categoria: item.categoria || "",
+      data: item.data || "",
+      publicado: item.publicado !== false,
+      imagem: item.imagem || "",
+      texto: item.texto || "",
+    });
+  }
+
+  async function excluir(id) {
+    if (!window.confirm("Excluir este release?")) return;
+
+    try {
+      const res = await fetch("/api/imprensa", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (res.ok) {
+        setLista((prev) => prev.filter((i) => i.id !== id));
+      }
+    } catch {
+      setErro("Erro ao excluir.");
+    }
+  }
+
   return (
-    <div className="space-y-6 text-neutral-50">
-      <header className="space-y-1">
-        <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
-          Imprensa
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold">Releases de imprensa</h1>
-        <p className="text-sm text-neutral-300 max-w-2xl">
-          Cadastre materiais oficiais da campanha com imagem, texto completo,
-          categoria, vídeo, destaque e, se quiser, link para o Instagram.
-        </p>
-      </header>
+    <div className="min-h-screen bg-[#0b0f19] text-white p-6">
+      <div className="max-w-6xl mx-auto space-y-10">
 
-      <section className="bg-neutral-900/80 border border-neutral-800 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 text-neutral-900">
-        {erro && (
-          <p className="mb-3 text-sm text-red-500 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
-            {erro}
+        {/* TÍTULO */}
+        <header>
+          <h1 className="text-3xl font-bold">Imprensa – Administração</h1>
+          <p className="text-gray-300 mt-1">
+            Cadastre releases oficiais, matérias e comunicados.
           </p>
-        )}
-        {sucesso && (
-          <p className="mb-3 text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
-            {sucesso}
-          </p>
-        )}
+        </header>
 
-        {carregando ? (
-          <p className="text-sm text-neutral-200">Carregando releases...</p>
-        ) : (
-          <div className="space-y-4">
-            {releases.map((r, index) => (
-              <div
-                key={r.id || index}
-                className="bg-white rounded-xl border border-neutral-200 px-4 py-4 space-y-3"
+        {/* FORM */}
+        <section className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            {editandoId ? "Editar Release" : "Novo Release"}
+          </h2>
+
+          {erro && (
+            <p className="text-sm bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded mb-3">
+              {erro}
+            </p>
+          )}
+
+          <form onSubmit={salvar} className="grid gap-4 md:grid-cols-2">
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Título</label>
+              <input
+                type="text"
+                name="titulo"
+                value={form.titulo}
+                onChange={handleChange}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Subtítulo</label>
+              <input
+                type="text"
+                name="subtitulo"
+                value={form.subtitulo}
+                onChange={handleChange}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Categoria</label>
+              <input
+                type="text"
+                name="categoria"
+                value={form.categoria}
+                onChange={handleChange}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+                placeholder="Ação social, Evento..."
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Data</label>
+              <input
+                type="date"
+                name="data"
+                value={form.data}
+                onChange={handleChange}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Publicado</label>
+              <input
+                type="checkbox"
+                name="publicado"
+                checked={form.publicado}
+                onChange={handleChange}
+                className="ml-2"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Imagem (URL)</label>
+              <input
+                type="text"
+                name="imagem"
+                value={form.imagem}
+                onChange={handleChange}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Texto da matéria</label>
+              <textarea
+                name="texto"
+                value={form.texto}
+                onChange={handleChange}
+                rows={5}
+                className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+                placeholder="Digite a matéria completa aqui..."
+              />
+            </div>
+
+            <div className="md:col-span-2 flex gap-3 mt-4">
+              <button
+                type="submit"
+                disabled={salvando}
+                className="px-4 py-2 bg-primary text-white rounded-md font-semibold"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-neutral-700">
-                    Release {index + 1}
-                  </p>
-                  <div className="flex items-center gap-3 text-xs text-neutral-700">
-                    <label className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        checked={!!r.destaque}
-                        onChange={(e) =>
-                          atualizarRelease(index, "destaque", e.target.checked)
-                        }
-                      />
-                      Destaque
-                    </label>
+                {salvando
+                  ? "Salvando..."
+                  : editandoId
+                  ? "Salvar alterações"
+                  : "Adicionar release"}
+              </button>
+
+              {editandoId && (
+                <button
+                  type="button"
+                  onClick={limpar}
+                  className="px-4 py-2 border border-gray-400 rounded-md"
+                >
+                  Cancelar edição
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        {/* LISTA */}
+        <section className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold mb-4">Releases cadastrados</h2>
+
+          {carregando ? (
+            <p className="text-neutral-700">Carregando...</p>
+          ) : lista.length === 0 ? (
+            <p className="text-neutral-700">Nenhum release cadastrado.</p>
+          ) : (
+            <div className="space-y-3">
+              {lista.map((item) => (
+                <div
+                  key={item.id}
+                  className="border border-gray-200 bg-white rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-neutral-900">{item.titulo}</p>
+                    <p className="text-xs text-neutral-600">{item.categoria}</p>
+
+                    {item.data && (
+                      <p className="text-xs text-neutral-600">📅 {item.data}</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 text-xs mt-3 md:mt-0">
                     <button
-                      type="button"
-                      onClick={() => removerRelease(index)}
-                      className="text-red-500 hover:underline"
+                      onClick={() => editar(item)}
+                      className="px-3 py-1 border border-primary text-primary rounded-md hover:bg-primary/10"
                     >
-                      Remover
+                      Editar
+                    </button>
+
+                    <button
+                      onClick={() => excluir(item.id)}
+                      className="px-3 py-1 border border-red-500 text-red-600 rounded-md hover:bg-red-50"
+                    >
+                      Excluir
                     </button>
                   </div>
                 </div>
-
-                <div className="grid md:grid-cols-4 gap-3 text-xs md:text-sm">
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-600">
-                      Data
-                    </label>
-                    <input
-                      type="date"
-                      value={r.data || ""}
-                      onChange={(e) =>
-                        atualizarRelease(index, "data", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-neutral-600">
-                      Título
-                    </label>
-                    <input
-                      type="text"
-                      value={r.titulo || ""}
-                      onChange={(e) =>
-                        atualizarRelease(index, "titulo", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-600">
-                      Categoria
-                    </label>
-                    <select
-                      value={r.categoria || ""}
-                      onChange={(e) =>
-                        atualizarRelease(index, "categoria", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
-                    >
-                      <option value="">Selecione...</option>
-                      {CATEGORIAS.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-600">
-                    Resumo (aparece no card)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={r.resumo || ""}
-                    onChange={(e) =>
-                      atualizarRelease(index, "resumo", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-600">
-                    Texto completo (aparece no pop-up)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={r.textoCompleto || ""}
-                    onChange={(e) =>
-                      atualizarRelease(index, "textoCompleto", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white text-xs"
-                  />
-                </div>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={adicionarRelease}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400"
-            >
-              + Novo release
-            </button>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={salvarTudo}
-                disabled={salvando}
-                className="px-5 py-2 rounded-full bg-amber-400 text-neutral-900 text-sm font-semibold hover:bg-amber-300 disabled:opacity-60"
-              >
-                {salvando ? "Salvando..." : "Salvar todos os releases"}
-              </button>
+              ))}
             </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+
+      </div>
     </div>
   );
 }
