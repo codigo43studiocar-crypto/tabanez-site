@@ -43,6 +43,18 @@ export default function AdminAgendaPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+<section className="bg-neutral-800 border border-neutral-700 rounded-xl p-4 md:p-5 mb-4">
+  <p className="text-[11px] text-gray-400 mb-1">
+    Painel <span className="mx-1">›</span> Agenda
+  </p>
+  <h1 className="text-lg md:text-xl font-semibold mb-1">
+    Agenda oficial
+  </h1>
+  <p className="text-sm text-gray-300">
+    Cadastre, edite e acompanhe os compromissos do Tabanez.
+  </p>
+</section>
+
   function limparForm() {
     setEditandoId(null);
     setForm({
@@ -55,18 +67,6 @@ export default function AdminAgendaPage() {
       descricao: "",
     });
   }
-
-  <section className="bg-neutral-800 border border-neutral-700 rounded-xl p-4 md:p-5 mb-4">
-  <p className="text-[11px] text-gray-400 mb-1">
-    Painel <span className="mx-1">›</span> Agenda
-  </p>
-  <h1 className="text-lg md:text-xl font-semibold mb-1">
-    Agenda oficial
-  </h1>
-  <p className="text-sm text-gray-300">
-    Cadastre, edite e acompanhe os compromissos do Tabanez.
-  </p>
-</section>
 
   async function salvarEvento(e) {
     e.preventDefault();
