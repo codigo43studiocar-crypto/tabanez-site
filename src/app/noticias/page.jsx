@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"; // impede erro de pre-render no Render
+export const dynamic = "force-dynamic"; // impede err de pre-render no Render
 
 async function getNews() {
   const res = await fetch("/api/noticias", {
