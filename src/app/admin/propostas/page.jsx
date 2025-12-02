@@ -1,6 +1,7 @@
+// src/app/admin/propostas/page.jsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const CATEGORIAS_PADRAO = [
   "Saúde",
@@ -16,23 +17,38 @@ const CATEGORIAS_PADRAO = [
 
 const PRIORIDADES = ["Alta", "Média", "Baixa"];
 
+function novaProposta() {
+  return {
+    id: Date.now(),
+    categoria: "",
+    prioridade: "Média",
+    ordem: "",
+    titulo: "",
+    subtitulo: "",
+    itensTexto: "",
+    publicado: true,
+    destaque: false,
+  };
+}
+
 export default function AdminPropostasPage() {
   const [propostas, setPropostas] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
-  const [busca, setBusca] = useState("");
-  const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
-  const [dragId, setDragId] = useState(null);
 
   useEffect(() => {
     async function carregar() {
+      setCarregando(true);
       try {
         const res = await fetch("/api/propostas", { cache: "no-store" });
         const json = await res.json();
         setPropostas(json.propostas || []);
-      } catch {
+      } catch (e) {
+        console.error(e);
         setErro("Erro ao carregar propostas.");
       } finally {
         setCarregando(false);
@@ -43,279 +59,121 @@ export default function AdminPropostasPage() {
 
   function atualizarProposta(id, campo, valor) {
     setPropostas((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)),
+      prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p))
     );
   }
 
   function adicionarProposta() {
-    const id =
-      Date.now().toString(16) + Math.random().toString(16).slice(2, 8);
-    setPropostas((prev) => [
-      ...prev,
-      {
-        id,
-        categoria: "Outros",
-        titulo: "",
-        subtitulo: "",
-        bullets: [],
-        prioridade: "Média",
-        destaque: false,
-        publicado: true,
-        ordem: (prev.length || 0) + 1,
-      },
-    ]);
+    setPropostas((prev) => [...prev, novaProposta()]);
   }
 
   function removerProposta(id) {
+    if (!window.confirm("Remover esta proposta?")) return;
     setPropostas((prev) => prev.filter((p) => p.id !== id));
   }
 
-  function duplicarProposta(id) {
-    setPropostas((prev) => {
-      const lista = [...prev];
-      const original = lista.find((p) => p.id === id);
-      if (!original) return prev;
-      const novoId =
-        Date.now().toString(16) + Math.random().toString(16).slice(2, 8);
-      const copia = {
-        ...original,
-        id: novoId,
-        titulo: original.titulo
-          ? original.titulo + " (cópia)"
-          : "Proposta (cópia)",
-        destaque: false,
-        ordem: original.ordem + 0.1,
-      };
-      lista.push(copia);
-      return lista;
-    });
-  }
-
-  async function salvar(e) {
-    e.preventDefault();
+  async function salvarTudo() {
     setErro("");
     setSucesso("");
     setSalvando(true);
 
     try {
-      // Reordena por categoria + ordem
-      const ordenadas = propostas
-        .slice()
-        .sort((a, b) => {
-          if (a.categoria < b.categoria) return -1;
-          if (a.categoria > b.categoria) return 1;
-          return (a.ordem || 0) - (b.ordem || 0);
-        })
-        .map((p, index) => ({ ...p, ordem: index + 1 }));
-
       const res = await fetch("/api/propostas", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propostas: ordenadas }),
+        body: JSON.stringify({ propostas }),
       });
 
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setPropostas(json.propostas || []);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErro(data.error || "Erro ao salvar propostas.");
+        return;
+      }
+
       setSucesso("Propostas salvas com sucesso.");
-    } catch {
-      setErro("Erro ao salvar propostas.");
+    } catch (e) {
+      console.error(e);
+      setErro("Erro de comunicação com o servidor.");
     } finally {
       setSalvando(false);
     }
   }
 
-  function handleDragStart(id) {
-    setDragId(id);
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault();
-  }
-
-  function handleDrop(idDestino) {
-    if (!dragId || dragId === idDestino) return;
-
-    setPropostas((prev) => {
-      const lista = [...prev];
-      const origemIndex = lista.findIndex((p) => p.id === dragId);
-      const destinoIndex = lista.findIndex((p) => p.id === idDestino);
-      if (origemIndex === -1 || destinoIndex === -1) return prev;
-
-      const [removido] = lista.splice(origemIndex, 1);
-      lista.splice(destinoIndex, 0, removido);
-      return lista;
-    });
-    setDragId(null);
-  }
-
-  function mover(id, direcao) {
-    setPropostas((prev) => {
-      const lista = [...prev];
-      const index = lista.findIndex((p) => p.id === id);
-      if (index === -1) return prev;
-      const novoIndex = index + direcao;
-      if (novoIndex < 0 || novoIndex >= lista.length) return prev;
-      const [item] = lista.splice(index, 1);
-      lista.splice(novoIndex, 0, item);
-      return lista;
-    });
-  }
-
-  const propostasFiltradas = useMemo(() => {
-    let lista = [...propostas];
-
-    if (categoriaFiltro !== "Todas") {
-      lista = lista.filter((p) => p.categoria === categoriaFiltro);
+  const propostasFiltradas = propostas.filter((p) => {
+    if (
+      busca &&
+      !`${p.titulo} ${p.subtitulo}`.toLowerCase().includes(busca.toLowerCase())
+    ) {
+      return false;
     }
-
-    if (busca.trim()) {
-      const termo = busca.toLowerCase();
-      lista = lista.filter(
-        (p) =>
-          (p.titulo || "").toLowerCase().includes(termo) ||
-          (p.subtitulo || "").toLowerCase().includes(termo),
-      );
+    if (categoriaFiltro !== "Todas" && p.categoria !== categoriaFiltro) {
+      return false;
     }
-
-    // Destaques primeiro dentro da categoria
-    lista.sort((a, b) => {
-      if (a.categoria < b.categoria) return -1;
-      if (a.categoria > b.categoria) return 1;
-      if (a.destaque && !b.destaque) return -1;
-      if (!a.destaque && b.destaque) return 1;
-      return (a.ordem || 0) - (b.ordem || 0);
-    });
-
-    return lista;
-  }, [propostas, busca, categoriaFiltro]);
-
-  if (carregando) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-gray-600">Carregando propostas...</p>
-      </div>
-    );
-  }
-
-  const categoriasExistentes = Array.from(
-    new Set(propostas.map((p) => p.categoria || "Outros")),
-  );
+    return true;
+  });
 
   return (
-    <div className="p-6">
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <header className="flex items-center justify-between gap-2 flex-wrap">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-dark">
-              Propostas
-            </p>
-            <h1 className="text-2xl md:text-3xl font-bold text-neutral-dark">
-              Propostas de Carlos Tabanez
-            </h1>
-            <p className="text-sm text-gray-200 max-w-2xl">
-              Organize as propostas por categoria, prioridade e destaque. Os
-              tópicos são exibidos como lista de itens na página pública.
-            </p>
-          </div>
+    <div className="space-y-6 text-neutral-50">
+      <header className="space-y-1">
+        <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
+          Propostas
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold">
+          Propostas de Carlos Tabanez
+        </h1>
+        <p className="text-sm text-neutral-300 max-w-2xl">
+          Organize as propostas por categoria, prioridade e destaque. Os tópicos
+          são exibidos como lista de itens na página pública.
+        </p>
+      </header>
 
-          <button
-            type="button"
-            onClick={adicionarProposta}
-            className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
+      <section className="bg-neutral-900/80 border border-neutral-800 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 text-neutral-900">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="Buscar propostas (título ou subtítulo)"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
+          />
+          <select
+            value={categoriaFiltro}
+            onChange={(e) => setCategoriaFiltro(e.target.value)}
+            className="w-full md:w-48 rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
           >
-            + Nova proposta
-          </button>
-        </header>
+            <option>Todas</option>
+            {CATEGORIAS_PADRAO.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
 
         {erro && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+          <p className="mb-3 text-sm text-red-500 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
             {erro}
           </p>
         )}
-
         {sucesso && (
-          <p className="text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded">
+          <p className="mb-3 text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
             {sucesso}
           </p>
         )}
 
-        {/* Filtros do painel */}
-        <div className="bg-white rounded-card shadow-card border border-gray-100 p-4 grid gap-3 md:grid-cols-3 text-sm">
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Buscar propostas (título ou subtítulo)
-            </label>
-            <input
-              type="text"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Filtrar por categoria
-            </label>
-            <select
-              value={categoriaFiltro}
-              onChange={(e) => setCategoriaFiltro(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
-            >
-              <option value="Todas">Todas</option>
-              {categoriasExistentes.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <form onSubmit={salvar} className="space-y-4">
-          {propostasFiltradas.length === 0 && (
-            <p className="text-sm text-gray-500">
-              Nenhuma proposta cadastrada ainda. Clique em &quot;Nova
-              proposta&quot; para adicionar a primeira.
-            </p>
-          )}
-
+        {carregando ? (
+          <p className="text-sm text-neutral-200">Carregando propostas...</p>
+        ) : (
           <div className="space-y-4">
             {propostasFiltradas.map((p, index) => (
               <div
                 key={p.id}
-                className="bg-white rounded-card shadow-card border border-gray-100 p-4 space-y-3"
-                draggable
-                onDragStart={() => handleDragStart(p.id)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(p.id)}
+                className="bg-white rounded-xl border border-neutral-200 px-4 py-4 space-y-3"
               >
-                <div className="flex justify-between gap-2 items-center">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="cursor-move text-gray-400 text-lg">
-                      ☰
-                    </span>
-                    <p className="text-xs font-semibold text-gray-500">
-                      Proposta {index + 1}
-                    </p>
-                    {p.publicado ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-semibold">
-                        Publicada
-                      </span>
-                    ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 font-semibold">
-                        Rascunho
-                      </span>
-                    )}
-                    {p.destaque && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-semibold">
-                        Em destaque
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1 text-[11px] text-gray-700">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-neutral-700">
+                    Proposta {index + 1}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-neutral-700">
+                    <label className="flex items-center gap-1">
                       <input
                         type="checkbox"
                         checked={!!p.publicado}
@@ -325,7 +183,7 @@ export default function AdminPropostasPage() {
                       />
                       Publicado
                     </label>
-                    <label className="flex items-center gap-1 text-[11px] text-gray-700">
+                    <label className="flex items-center gap-1">
                       <input
                         type="checkbox"
                         checked={!!p.destaque}
@@ -337,48 +195,27 @@ export default function AdminPropostasPage() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => mover(p.id, -1)}
-                      className="text-xs text-gray-500 hover:text-gray-800"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => mover(p.id, 1)}
-                      className="text-xs text-gray-500 hover:text-gray-800"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => duplicarProposta(p.id)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Duplicar
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => removerProposta(p.id)}
-                      className="text-xs text-red-600 hover:underline"
+                      className="text-red-500 hover:underline"
                     >
                       Remover
                     </button>
                   </div>
                 </div>
 
-                {/* Categoria + prioridade */}
-                <div className="grid md:grid-cols-3 gap-3">
+                <div className="grid md:grid-cols-4 gap-3 text-xs md:text-sm">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-neutral-600">
                       Categoria
                     </label>
                     <select
-                      value={p.categoria || "Outros"}
+                      value={p.categoria || ""}
                       onChange={(e) =>
                         atualizarProposta(p.id, "categoria", e.target.value)
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white"
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
                     >
+                      <option value="">Selecione...</option>
                       {CATEGORIAS_PADRAO.map((c) => (
                         <option key={c} value={c}>
                           {c}
@@ -388,7 +225,7 @@ export default function AdminPropostasPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-neutral-600">
                       Prioridade
                     </label>
                     <select
@@ -396,39 +233,32 @@ export default function AdminPropostasPage() {
                       onChange={(e) =>
                         atualizarProposta(p.id, "prioridade", e.target.value)
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white"
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
                     >
                       {PRIORIDADES.map((pr) => (
-                        <option key={pr} value={pr}>
-                          {pr}
-                        </option>
+                        <option key={pr}>{pr}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-neutral-600">
                       Ordem (opcional)
                     </label>
                     <input
                       type="number"
-                      value={p.ordem ?? ""}
+                      value={p.ordem || ""}
                       onChange={(e) =>
-                        atualizarProposta(
-                          p.id,
-                          "ordem",
-                          e.target.value ? Number(e.target.value) : "",
-                        )
+                        atualizarProposta(p.id, "ordem", e.target.value)
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
                     />
                   </div>
                 </div>
 
-                {/* Título + subtítulo */}
-                <div className="space-y-3">
+                <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-neutral-600">
                       Título da proposta
                     </label>
                     <input
@@ -437,68 +267,65 @@ export default function AdminPropostasPage() {
                       onChange={(e) =>
                         atualizarProposta(p.id, "titulo", e.target.value)
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-neutral-600">
                       Subtítulo (texto abaixo do título)
                     </label>
-                    <textarea
-                      rows={2}
+                    <input
+                      type="text"
                       value={p.subtitulo || ""}
                       onChange={(e) =>
                         atualizarProposta(p.id, "subtitulo", e.target.value)
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
                     />
                   </div>
                 </div>
 
-                {/* Bullets */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-neutral-600">
                     Itens da proposta (um por linha)
                   </label>
                   <textarea
                     rows={4}
-                    value={(p.bullets || []).join("\n")}
+                    value={p.itensTexto || ""}
                     onChange={(e) =>
-                      atualizarProposta(
-                        p.id,
-                        "bullets",
-                        e.target.value
-                          .split("\n")
-                          .map((b) => b.trim())
-                          .filter((b) => b.length > 0),
-                      )
+                      atualizarProposta(p.id, "itensTexto", e.target.value)
                     }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                    placeholder="Exemplo:
-• Criar programa de atendimento...
-• Ampliar número de vagas..."
+                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white text-xs"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">
+                  <p className="mt-1 text-[11px] text-neutral-500">
                     Na página pública, cada linha será exibida como um item da
                     lista com marcador.
                   </p>
                 </div>
               </div>
             ))}
-          </div>
 
-          <div className="flex justify-end pt-2">
             <button
-              type="submit"
-              disabled={salvando}
-              className="px-5 py-2.5 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary-dark disabled:opacity-60"
+              type="button"
+              onClick={adicionarProposta}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400"
             >
-              {salvando ? "Salvando..." : "Salvar propostas"}
+              + Nova proposta
             </button>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={salvarTudo}
+                disabled={salvando}
+                className="px-5 py-2 rounded-full bg-amber-400 text-neutral-900 text-sm font-semibold hover:bg-amber-300 disabled:opacity-60"
+              >
+                {salvando ? "Salvando..." : "Salvar todas as propostas"}
+              </button>
+            </div>
           </div>
-        </form>
-      </main>
+        )}
+      </section>
     </div>
   );
 }

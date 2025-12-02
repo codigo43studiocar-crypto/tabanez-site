@@ -1,76 +1,70 @@
-import Link from "next/link";
+// src/app/admin/layout.jsx
+"use client";
 
-export const metadata = {
-  title: "Painel Administrativo – Tabanez",
-};
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const NAV_ITEMS = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/agenda", label: "Agenda" },
+  { href: "/admin/propostas", label: "Propostas" },
+  { href: "/admin/imprensa", label: "Imprensa" },
+  { href: "/admin/galeria", label: "Galeria" },
+  { href: "/admin/conteudo", label: "Conteúdo" },
+];
 
 export default function AdminLayout({ children }) {
+  const pathname = usePathname();
+
   return (
-    <div className="admin-container min-h-screen bg-neutral-900 pt-24 px-4 pb-10">
-      {/* BARRA SUPERIOR */}
-      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
-          <div>
-            <h1 className="text-sm font-semibold tracking-wide text-slate-100">
-              Painel Administrativo
-            </h1>
-            <p className="text-xs text-slate-400">
-              Gestão de agenda, propostas, notícias e conteúdos.
-            </p>
-          </div>
+    <div className="min-h-screen bg-neutral-950 text-neutral-50">
+      {/* FAIXA SUPERIOR (igual tema antigo) */}
+      <header className="border-b border-neutral-800 bg-neutral-950">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <p className="text-[10px] tracking-[0.35em] uppercase text-amber-300">
+            Painel Administrativo
+          </p>
+          <p className="text-xs text-neutral-400">
+            Gestão de agenda, propostas, imprensa, galeria e conteúdos.
+          </p>
 
-          {/* MENU RÁPIDO */}
-          <nav className="flex flex-wrap items-center gap-2 text-xs">
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/agenda"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Agenda
-            </Link>
-            <Link
-              href="/admin/propostas"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Propostas
-            </Link>
-            <Link
-              href="/admin/imprensa"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Imprensa
-            </Link>
-            <Link
-              href="/admin/galeria"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Galeria
-            </Link>
-            <Link
-              href="/admin/conteudo"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Conteúdo
-            </Link>
+          {/* MENU DE ABAS DO PAINEL */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {NAV_ITEMS.map((item) => {
+              const active =
+                pathname === item.href ||
+                (item.href !== "/admin" && pathname.startsWith(item.href));
 
-            {/* Logout sempre no canto */}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={[
+                    "px-4 py-1.5 rounded-full text-xs md:text-sm border transition",
+                    active
+                      ? "bg-amber-400 text-neutral-900 border-amber-300 shadow-lg shadow-amber-500/30"
+                      : "bg-neutral-900 text-neutral-100 border-neutral-700 hover:bg-neutral-800",
+                  ].join(" ")}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+
             <Link
               href="/admin/logout"
-              className="px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-semibold transition"
+              className="ml-auto px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold bg-red-600 text-white border border-red-500 hover:bg-red-500"
             >
               Sair
             </Link>
-          </nav>
+          </div>
         </div>
       </header>
 
-      {/* CONTEÚDO DAS PÁGINAS DO ADMIN */}
-      <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+      {/* CONTEÚDO */}
+      <main className="py-6 md:py-8">
+        <div className="max-w-6xl mx-auto px-4">{children}</div>
+      </main>
     </div>
   );
 }

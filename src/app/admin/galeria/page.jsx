@@ -1,3 +1,4 @@
+// src/app/admin/galeria/page.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -15,587 +16,352 @@ const CATEGORIAS = [
   "Outros",
 ];
 
-export default function AdminGaleria() {
+function novoItem() {
+  return {
+    id: Date.now(),
+    titulo: "",
+    descricao: "",
+    ano: "",
+    categoria: "",
+    imagemUrl: "",
+  };
+}
+
+export default function AdminGaleriaPage() {
   const [itens, setItens] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
-  const [modo, setModo] = useState("grade"); // grade | lista
 
   const [busca, setBusca] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [anoFiltro, setAnoFiltro] = useState("Todos");
+  const [modo, setModo] = useState("grade"); // "grade" | "lista"
 
-  const [uploadingIndex, setUploadingIndex] = useState(null);
-  const [dragId, setDragId] = useState(null);
-
-  // ==========================
-  // Carregar galeria
-  // ==========================
   useEffect(() => {
-    async function load() {
+    async function carregar() {
+      setCarregando(true);
       try {
         const res = await fetch("/api/galeria", { cache: "no-store" });
         const json = await res.json();
         setItens(json.itens || []);
-      } catch {
+      } catch (e) {
+        console.error(e);
         setErro("Erro ao carregar a galeria.");
       } finally {
         setCarregando(false);
       }
     }
-    load();
+    carregar();
   }, []);
 
-  // ==========================
-  // Atualizar campos
-  // ==========================
-  function atualizar(id, campo, valor) {
+  const anos = useMemo(() => {
+    const set = new Set();
+    itens.forEach((i) => i.ano && set.add(i.ano));
+    return Array.from(set).sort();
+  }, [itens]);
+
+  function atualizarItem(id, campo, valor) {
     setItens((prev) => prev.map((i) => (i.id === id ? { ...i, [campo]: valor } : i)));
   }
 
-  // ==========================
-  // Adicionar novo item
-  // ==========================
   function adicionarItem() {
-    const id = Date.now().toString(16) + Math.random().toString(16).slice(2);
-
-    setItens((prev) => [
-      ...prev,
-      {
-        id,
-        categoria: "Outros",
-        titulo: "",
-        descricaoCurta: "",
-        descricaoLonga: "",
-        data: new Date().toISOString().slice(0, 10),
-        imagem: "",
-        video: "",
-        destaque: false,
-        publicado: true,
-        views: 0,
-        ordem: (prev.length || 0) + 1,
-      },
-    ]);
+    setItens((prev) => [...prev, novoItem()]);
   }
 
-  // ==========================
-  // Remover item
-  // ==========================
   function removerItem(id) {
+    if (!window.confirm("Remover este item da galeria?")) return;
     setItens((prev) => prev.filter((i) => i.id !== id));
   }
 
-  // ==========================
-  // Duplicar item
-  // ==========================
-  function duplicarItem(id) {
-    setItens((prev) => {
-      const original = prev.find((i) => i.id === id);
-      if (!original) return prev;
-
-      const copia = {
-        ...original,
-        id: Date.now().toString(16) + Math.random().toString(16).slice(2),
-        titulo: original.titulo + " (cópia)",
-        destaque: false,
-        views: 0,
-        ordem: (original.ordem || 0) + 0.1,
-      };
-      return [...prev, copia];
-    });
-  }
-
-  // ==========================
-  // Drag & Drop
-  // ==========================
-  function handleDragStart(id) {
-    setDragId(id);
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault();
-  }
-
-  function handleDrop(idDestino) {
-    if (!dragId || dragId === idDestino) return;
-
-    setItens((prev) => {
-      const lista = [...prev];
-      const origemIndex = lista.findIndex((i) => i.id === dragId);
-      const destinoIndex = lista.findIndex((i) => i.id === idDestino);
-      if (origemIndex === -1 || destinoIndex === -1) return prev;
-
-      const [item] = lista.splice(origemIndex, 1);
-      lista.splice(destinoIndex, 0, item);
-
-      return lista;
-    });
-
-    setDragId(null);
-  }
-
-  // ==========================
-  // Upload (imagem ou vídeo)
-  // ==========================
-  async function uploadArquivo(index, file) {
-    if (!file) return;
-
-    setUploadingIndex(index);
-    setErro("");
-    setSucesso("");
-
-    try {
-      const form = new FormData();
-      form.append("file", file);
-
-      const res = await fetch("/api/upload-galeria", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-
-      setItens((prev) => {
-        const lista = [...prev];
-        lista[index].imagem = json.url;
-        return lista;
-      });
-
-      setSucesso("Arquivo enviado com sucesso.");
-    } catch {
-      setErro("Erro ao enviar arquivo.");
-    } finally {
-      setUploadingIndex(null);
+  const itensFiltrados = itens.filter((i) => {
+    if (
+      busca &&
+      !`${i.titulo} ${i.descricao}`.toLowerCase().includes(busca.toLowerCase())
+    ) {
+      return false;
     }
-  }
+    if (categoriaFiltro !== "Todas" && i.categoria !== categoriaFiltro) {
+      return false;
+    }
+    if (anoFiltro !== "Todos" && i.ano !== anoFiltro) {
+      return false;
+    }
+    return true;
+  });
 
-  function abrirUpload(index) {
-    const input = document.getElementById(`galeria-upload-${index}`);
-    if (input) input.click();
-  }
-
-  // ==========================
-  // Salvar alterações
-  // ==========================
-  async function salvar(e) {
-    e.preventDefault();
+  async function salvarTudo() {
     setErro("");
     setSucesso("");
-
-    const ordenados = itens
-      .slice()
-      .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-      .map((i, idx) => ({ ...i, ordem: idx + 1 }));
+    setSalvando(true);
 
     try {
       const res = await fetch("/api/galeria", {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itens: ordenados }),
+        body: JSON.stringify({ itens }),
       });
 
-      if (!res.ok) throw new Error();
-
-      const json = await res.json();
-      setItens(json.itens || []);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErro(data.error || "Erro ao salvar galeria.");
+        return;
+      }
 
       setSucesso("Galeria salva com sucesso.");
-    } catch {
-      setErro("Erro ao salvar as alterações.");
+    } catch (e) {
+      console.error(e);
+      setErro("Erro de comunicação com o servidor.");
+    } finally {
+      setSalvando(false);
     }
   }
 
-  // ==========================
-  // Filtros do painel
-  // ==========================
-  const itensFiltrados = useMemo(() => {
-    let lista = [...itens];
-
-    if (categoriaFiltro !== "Todas") {
-      lista = lista.filter((i) => i.categoria === categoriaFiltro);
-    }
-
-    if (anoFiltro !== "Todos") {
-      lista = lista.filter((i) => (i.data || "").startsWith(anoFiltro));
-    }
-
-    if (busca.trim()) {
-      const termo = busca.toLowerCase();
-      lista = lista.filter(
-        (i) =>
-          (i.titulo || "").toLowerCase().includes(termo) ||
-          (i.descricaoCurta || "").toLowerCase().includes(termo)
-      );
-    }
-
-    return lista.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-  }, [itens, busca, categoriaFiltro, anoFiltro]);
-
-  const anos = useMemo(() => {
-    const s = new Set(
-      itens
-        .map((i) => (i.data || "").slice(0, 4))
-        .filter((a) => a && a.length === 4)
-    );
-    return Array.from(s).sort((a, b) => b.localeCompare(a));
-  }, [itens]);
-
-  if (carregando) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-gray-600">Carregando...</p>
-      </div>
-    );
-  }
   return (
-    <div className="p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6 text-neutral-50">
+      <header className="space-y-1">
+        <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
+          Galeria
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold">
+          Gerenciar Galeria (Fotos e Vídeos)
+        </h1>
+        <p className="text-sm text-neutral-300 max-w-2xl">
+          Atualize a galeria de fotos com título, descrição, categorias, anos e
+          imagens.
+        </p>
+      </header>
 
-        {/* HEADER */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-primary-dark font-semibold">
-              Galeria
-            </p>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-dark">
-              Gerenciar Galeria (Fotos e Vídeos)
-            </h1>
-            <p className="text-sm text-neutral-200 max-w-2xl">
-              Atualize a galeria do Tabanez com fotos, vídeos e descrições de ações, eventos, visitas e fiscalizações.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setModo("grade")}
-              className={`px-4 py-2 rounded-md text-sm font-medium border ${
-                modo === "grade"
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white text-neutral-700 border-neutral-300"
-              }`}
-            >
-              Grade
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModo("lista")}
-              className={`px-4 py-2 rounded-md text-sm font-medium border ${
-                modo === "lista"
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white text-neutral-700 border-neutral-300"
-              }`}
-            >
-              Lista
-            </button>
-
-            <button
-              type="button"
-              onClick={adicionarItem}
-              className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-primary-dark"
-            >
-              + Novo item
-            </button>
-          </div>
-        </div>
-
-        {/* ALERTAS */}
+      <section className="bg-neutral-900/80 border border-neutral-800 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 text-neutral-900">
         {erro && (
-          <p className="text-sm text-red-700 bg-red-100 px-3 py-2 rounded border border-red-300">
+          <p className="mb-3 text-sm text-red-500 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
             {erro}
           </p>
         )}
-
         {sucesso && (
-          <p className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded border border-green-300">
+          <p className="mb-3 text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
             {sucesso}
           </p>
         )}
 
-        {/* FILTROS */}
-        <div className="bg-white rounded-card shadow-card border border-gray-100 p-4 grid md:grid-cols-3 gap-4">
-          <div>
-            <label className="text-xs font-medium text-gray-600">Buscar</label>
-            <input
-              type="text"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por título ou descrição..."
-              className="w-full mt-1 border border-gray-300 px-3 py-2 rounded-md text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-gray-600">Categoria</label>
-            <select
-              value={categoriaFiltro}
-              onChange={(e) => setCategoriaFiltro(e.target.value)}
-              className="w-full mt-1 border border-gray-300 px-3 py-2 rounded-md text-sm"
+        <div className="flex flex-col md:flex-row gap-3 mb-4 text-xs md:text-sm">
+          <input
+            type="text"
+            placeholder="Buscar por título ou descrição..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 bg-white"
+          />
+          <select
+            value={categoriaFiltro}
+            onChange={(e) => setCategoriaFiltro(e.target.value)}
+            className="w-full md:w-48 rounded-md border border-neutral-300 px-3 py-2 bg-white"
+          >
+            <option>Todas</option>
+            {CATEGORIAS.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+          <select
+            value={anoFiltro}
+            onChange={(e) => setAnoFiltro(e.target.value)}
+            className="w-full md:w-32 rounded-md border border-neutral-300 px-3 py-2 bg-white"
+          >
+            <option>Todos</option>
+            {anos.map((a) => (
+              <option key={a}>{a}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setModo("grade")}
+              className={`px-3 py-1 rounded-full border text-xs ${
+                modo === "grade"
+                  ? "bg-neutral-900 text-white border-neutral-800"
+                  : "bg-white border-neutral-300"
+              }`}
             >
-              <option value="Todas">Todas</option>
-              {CATEGORIAS.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-gray-600">Ano</label>
-            <select
-              value={anoFiltro}
-              onChange={(e) => setAnoFiltro(e.target.value)}
-              className="w-full mt-1 border border-gray-300 px-3 py-2 rounded-md text-sm"
+              Grade
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo("lista")}
+              className={`px-3 py-1 rounded-full border text-xs ${
+                modo === "lista"
+                  ? "bg-neutral-900 text-white border-neutral-800"
+                  : "bg-white border-neutral-300"
+              }`}
             >
-              <option value="Todos">Todos</option>
-              {anos.map((ano) => (
-                <option key={ano}>{ano}</option>
-              ))}
-            </select>
+              Lista
+            </button>
           </div>
         </div>
 
-        {/* ============================
-            MODO GRADE
-        ============================= */}
-        {modo === "grade" && (
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {itensFiltrados.map((item) => {
-              const realIndex = itens.findIndex((i) => i.id === item.id);
-              return (
-                <div
-                  key={item.id}
-                  draggable
-                  onDragStart={() => handleDragStart(item.id)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(item.id)}
-                  className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden group"
-                >
-                  {/* IMAGEM / VÍDEO */}
-                  <div className="relative w-full pt-[65%] bg-neutral-900 overflow-hidden">
-                    {item.imagem ? (
-                      <img
-                        src={item.imagem}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-neutral-800" />
-                    )}
-
-                    {item.video && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <span className="text-white text-xl font-bold bg-black/70 px-3 py-1 rounded-md">
-                          ▶
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CAMPOS */}
-                  <div className="p-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary-dark font-semibold uppercase tracking-wide">
-                        {item.categoria}
-                      </span>
-
-                      <label className="text-[10px] flex items-center gap-1 text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={item.publicado}
-                          onChange={(e) =>
-                            atualizar(item.id, "publicado", e.target.checked)
-                          }
-                        />
-                        Publicado
-                      </label>
-                    </div>
-
+        {carregando ? (
+          <p className="text-sm text-neutral-200">Carregando galeria...</p>
+        ) : (
+          <div className="space-y-4">
+            {modo === "grade" ? (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {itensFiltrados.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2"
+                  >
                     <input
                       type="text"
-                      value={item.titulo}
-                      onChange={(e) => atualizar(item.id, "titulo", e.target.value)}
                       placeholder="Título"
-                      className="w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md"
+                      value={item.titulo || ""}
+                      onChange={(e) =>
+                        atualizarItem(item.id, "titulo", e.target.value)
+                      }
+                      className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs bg-white"
                     />
-
                     <textarea
                       rows={2}
-                      value={item.descricaoCurta}
-                      onChange={(e) =>
-                        atualizar(item.id, "descricaoCurta", e.target.value)
-                      }
-                      className="w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md"
                       placeholder="Descrição curta"
+                      value={item.descricao || ""}
+                      onChange={(e) =>
+                        atualizarItem(item.id, "descricao", e.target.value)
+                      }
+                      className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs bg-white"
                     />
-
-                    {/* Upload */}
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-600">Imagem</label>
-
-                      <input
-                        type="file"
-                        id={`galeria-upload-${realIndex}`}
-                        className="hidden"
+                    <input
+                      type="text"
+                      placeholder="URL da imagem"
+                      value={item.imagemUrl || ""}
+                      onChange={(e) =>
+                        atualizarItem(item.id, "imagemUrl", e.target.value)
+                      }
+                      className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs bg-white"
+                    />
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <select
+                        value={item.categoria || ""}
                         onChange={(e) =>
-                          uploadArquivo(realIndex, e.target.files[0])
+                          atualizarItem(item.id, "categoria", e.target.value)
                         }
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => abrirUpload(realIndex)}
-                        className="px-3 py-1.5 rounded-md bg-primary text-white text-xs"
+                        className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 bg-white"
                       >
-                        {uploadingIndex === realIndex
-                          ? "Enviando..."
-                          : "Enviar imagem"}
-                      </button>
-
+                        <option value="">Categoria...</option>
+                        {CATEGORIAS.map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
                       <input
-                        type="text"
-                        value={item.imagem}
+                        type="number"
+                        placeholder="Ano"
+                        value={item.ano || ""}
                         onChange={(e) =>
-                          atualizar(item.id, "imagem", e.target.value)
+                          atualizarItem(item.id, "ano", e.target.value)
                         }
-                        placeholder="/galeria/arquivo.jpg"
-                        className="w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md"
+                        className="w-20 rounded-md border border-neutral-300 px-2 py-1.5 bg-white"
                       />
                     </div>
-
-                    {/* Video */}
-                    <div>
-                      <label className="text-xs text-gray-600">Vídeo (opcional)</label>
-                      <input
-                        type="text"
-                        value={item.video}
-                        onChange={(e) =>
-                          atualizar(item.id, "video", e.target.value)
-                        }
-                        placeholder="URL do YouTube ou .mp4"
-                        className="w-full border border-gray-300 px-2 py-1.5 text-sm rounded-md"
-                      />
-                    </div>
-
-                    {/* AÇÕES */}
-                    <div className="flex justify-between pt-2">
-                      <button
-                        type="button"
-                        onClick={() => duplicarItem(item.id)}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Duplicar
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => removerItem(item.id)}
-                        className="text-xs text-red-600 hover:underline"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ============================
-            MODO LISTA (tabela)
-        ============================= */}
-        {modo === "lista" && (
-          <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-neutral-100 border-b">
-                <tr>
-                  <th className="px-3 py-2 text-left">Ordem</th>
-                  <th className="px-3 py-2 text-left">Miniatura</th>
-                  <th className="px-3 py-2 text-left">Título</th>
-                  <th className="px-3 py-2 text-left">Categoria</th>
-                  <th className="px-3 py-2 text-left">Data</th>
-                  <th className="px-3 py-2 text-left">Publicado</th>
-                  <th className="px-3 py-2 text-left">Ações</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {itensFiltrados.map((item) => {
-                  const realIndex = itens.findIndex((i) => i.id === item.id);
-                  return (
-                    <tr
-                      key={item.id}
-                      draggable
-                      onDragStart={() => handleDragStart(item.id)}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(item.id)}
-                      className="border-b hover:bg-neutral-50"
+                    <button
+                      type="button"
+                      onClick={() => removerItem(item.id)}
+                      className="text-xs text-red-500 hover:underline"
                     >
-                      <td className="px-3 py-2">{item.ordem}</td>
-
-                      <td className="px-3 py-2">
-                        {item.imagem ? (
-                          <img
-                            src={item.imagem}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-neutral-300 rounded" />
-                        )}
-                      </td>
-
-                      <td className="px-3 py-2">{item.titulo}</td>
-
-                      <td className="px-3 py-2">{item.categoria}</td>
-
-                      <td className="px-3 py-2">{item.data}</td>
-
-                      <td className="px-3 py-2">
-                        <input
-                          type="checkbox"
-                          checked={item.publicado}
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {itensFiltrados.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl border border-neutral-200 px-4 py-3 space-y-2"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs">
+                      <input
+                        type="text"
+                        placeholder="Título"
+                        value={item.titulo || ""}
+                        onChange={(e) =>
+                          atualizarItem(item.id, "titulo", e.target.value)
+                        }
+                        className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 bg-white"
+                      />
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={item.categoria || ""}
                           onChange={(e) =>
-                            atualizar(item.id, "publicado", e.target.checked)
+                            atualizarItem(item.id, "categoria", e.target.value)
                           }
+                          className="rounded-md border border-neutral-300 px-2 py-1.5 bg-white"
+                        >
+                          <option value="">Categoria...</option>
+                          {CATEGORIAS.map((c) => (
+                            <option key={c}>{c}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          placeholder="Ano"
+                          value={item.ano || ""}
+                          onChange={(e) =>
+                            atualizarItem(item.id, "ano", e.target.value)
+                          }
+                          className="w-20 rounded-md border border-neutral-300 px-2 py-1.5 bg-white"
                         />
-                      </td>
+                      </div>
+                    </div>
+                    <textarea
+                      rows={2}
+                      placeholder="Descrição"
+                      value={item.descricao || ""}
+                      onChange={(e) =>
+                        atualizarItem(item.id, "descricao", e.target.value)
+                      }
+                      className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs bg-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="URL da imagem"
+                      value={item.imagemUrl || ""}
+                      onChange={(e) =>
+                        atualizarItem(item.id, "imagemUrl", e.target.value)
+                      }
+                      className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removerItem(item.id)}
+                      className="text-xs text-red-500 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-                      <td className="px-3 py-2 space-x-3">
-                        <button
-                          onClick={() => duplicarItem(item.id)}
-                          className="text-primary text-xs hover:underline"
-                        >
-                          Duplicar
-                        </button>
+            <button
+              type="button"
+              onClick={adicionarItem}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400"
+            >
+              + Novo item
+            </button>
 
-                        <button
-                          onClick={() => removerItem(item.id)}
-                          className="text-red-600 text-xs hover:underline"
-                        >
-                          Remover
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={salvarTudo}
+                disabled={salvando}
+                className="px-5 py-2 rounded-full bg-amber-400 text-neutral-900 text-sm font-semibold hover:bg-amber-300 disabled:opacity-60"
+              >
+                {salvando ? "Salvando..." : "Salvar galeria"}
+              </button>
+            </div>
           </div>
         )}
-
-        {/* BOTÃO SALVAR */}
-        <div className="flex justify-end pt-4">
-          <button
-            type="button"
-            onClick={salvar}
-            className="px-5 py-2.5 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary-dark"
-          >
-            Salvar galeria
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
