@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="admin-container min-h-screen bg-neutral-900 pt-24 px-4 pb-10">
       {/* BARRA SUPERIOR */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3 gap-4">

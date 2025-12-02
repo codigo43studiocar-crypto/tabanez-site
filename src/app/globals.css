@@ -29,4 +29,25 @@ body {
   from { opacity: 0; transform: scale(.95); }
   to   { opacity: 1; transform: scale(1); }
 }
+/* ======== FIX: TEMA DO PAINEL ADMIN ======== */
+.admin-container,
+.admin-container * {
+  color: #222 !important; /* texto escuro */
+}
+
+.admin-container h1,
+.admin-container h2,
+.admin-container h3,
+.admin-container label,
+.admin-container p,
+.admin-container span {
+  color: #222 !important;
+}
+
+.admin-container input,
+.admin-container select,
+.admin-container textarea {
+  color: #222 !important;
+}
+
 
