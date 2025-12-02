@@ -1,22 +1,16 @@
 import NewsClient from "./NewsClient";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"; // garante que não quebra no Render
 
-async function getNews() {
-  try {
-    const res = await fetch("/api/noticias", {
-      cache: "no-store",
-    });
+export default function NoticiasPage() {
+  return (
+    <section className="section py-10 md:py-14">
+      <h1 className="text-3xl md:text-4xl font-bold text-primary mb-8">
+        Notícias Automáticas
+      </h1>
 
-    if (!res.ok) return [];
-
-    return await res.json();
-  } catch (e) {
-    return [];
-  }
-}
-
-export default async function Noticias() {
-  const news = await getNews();
-  return <NewsClient news={news} />;
+      {/* Componente cliente que faz o fetch e mostra o modal */}
+      <NewsClient />
+    </section>
+  );
 }
