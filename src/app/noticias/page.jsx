@@ -1,15 +1,17 @@
-export const dynamic = "force-dynamic"; // impede err de pre-render no Render
+export const dynamic = "force-dynamic";
 
 async function getNews() {
-  const res = await fetch("/api/noticias", {
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/noticias`, {
+      cache: "no-store"
+    });
 
-  if (!res.ok) {
+    if (!res.ok) return [];
+
+    return await res.json();
+  } catch (e) {
     return [];
   }
-
-  return res.json();
 }
 
 export default async function Noticias() {
@@ -22,6 +24,10 @@ export default async function Noticias() {
       </h1>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {news.length === 0 && (
+          <p className="text-gray-500">Nenhuma notícia disponível no momento.</p>
+        )}
+
         {news.map((item) => (
           <article key={item.id} className="p-4 border rounded shadow">
             <h2 className="text-xl font-semibold mb-2">{item.titulo}</h2>
