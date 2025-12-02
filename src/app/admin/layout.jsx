@@ -1,46 +1,76 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Painel Administrativo - Tabanez",
+  title: "Painel Administrativo – Tabanez",
 };
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="min-h-screen bg-neutral-900 text-gray-100">
-      {/* TOPO DO PAINEL */}
-      <header className="border-b border-neutral-800 bg-neutral-900/90 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* BARRA SUPERIOR */}
+      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-accent-yellow">
+            <h1 className="text-sm font-semibold tracking-wide text-slate-100">
               Painel Administrativo
-            </p>
-            <p className="text-sm text-gray-300">
-              Gestão do site Tabanez — agenda, propostas, imprensa e galeria.
+            </h1>
+            <p className="text-xs text-slate-400">
+              Gestão de agenda, propostas, notícias e conteúdos.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* MENU RÁPIDO */}
+          <nav className="flex flex-wrap items-center gap-2 text-xs">
             <Link
-              href="/"
-              className="text-xs md:text-sm text-gray-300 hover:text-white underline"
+              href="/admin"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
             >
-              Ver site público
+              Dashboard
+            </Link>
+            <Link
+              href="/admin/agenda"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+            >
+              Agenda
+            </Link>
+            <Link
+              href="/admin/propostas"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+            >
+              Propostas
+            </Link>
+            <Link
+              href="/admin/imprensa"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+            >
+              Imprensa
+            </Link>
+            <Link
+              href="/admin/galeria"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+            >
+              Galeria
+            </Link>
+            <Link
+              href="/admin/conteudo"
+              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+            >
+              Conteúdo
             </Link>
 
+            {/* Logout sempre no canto */}
             <Link
               href="/admin/logout"
-              className="text-xs md:text-sm rounded-full border border-red-500/70 px-3 py-1.5 text-red-200 hover:bg-red-500/10 transition"
+              className="px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-semibold transition"
             >
               Sair
             </Link>
-          </div>
+          </nav>
         </div>
       </header>
 
-      {/* CONTEÚDO DAS PÁGINAS /ADMIN */}
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {children}
-      </main>
+      {/* CONTEÚDO DAS PÁGINAS DO ADMIN */}
+      <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
     </div>
   );
 }

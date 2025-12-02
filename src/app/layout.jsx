@@ -1,76 +1,84 @@
-import Link from "next/link";
+import "./globals.css";
+import Header from "../components/Header";
+import FloatingActions from "../components/FloatingActions";
 
 export const metadata = {
-  title: "Painel Administrativo – Tabanez",
+  title: "Tabanez",
+  description: "Site político com notícias automáticas.",
 };
 
-export default function AdminLayout({ children }) {
+export default function RootLayout({ children }) {
+  const anoAtual = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* BARRA SUPERIOR */}
-      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
-          <div>
-            <h1 className="text-sm font-semibold tracking-wide text-slate-100">
-              Painel Administrativo
-            </h1>
-            <p className="text-xs text-slate-400">
-              Gestão de agenda, propostas, notícias e conteúdos.
-            </p>
+    <html lang="pt-BR">
+      <body className="bg-neutral-bg text-neutral-dark">
+        <Header />
+
+        {/* CONTEÚDO PRINCIPAL */}
+        <main className="min-h-[70vh] pt-24 pb-8">{children}</main>
+
+        {/* RODAPÉ */}
+        <footer className="bg-neutral-dark text-gray-200 mt-8">
+          <div className="section py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-accent-yellow">
+                Tabanez Pelo Distrito Federal
+              </p>
+              <p className="text-sm text-gray-300 mt-1">
+                Presença constante nas ruas ao lado da população.
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                © {anoAtual} – Carlos Alberto Tabanez.
+              </p>
+            </div>
+
+            {/* REDES SOCIAIS NO RODAPÉ */}
+            <div className="flex flex-col items-start md:items-end gap-2">
+              <p className="text-xs text-gray-400">Acompanhe também nas redes:</p>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://instagram.com/tabanezdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
+                  aria-label="Instagram"
+                >
+                  <span className="text-lg">📸</span>
+                </a>
+                <a
+                  href="https://facebook.com/tabanezdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
+                  aria-label="Facebook"
+                >
+                  <span className="text-lg">📘</span>
+                </a>
+                <a
+                  href="https://youtube.com/tabanezdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
+                  aria-label="YouTube"
+                >
+                  <span className="text-lg">▶️</span>
+                </a>
+              </div>
+
+              <a
+                href="/fale-comigo"
+                className="text-xs text-accent-yellow hover:underline"
+              >
+                Fale comigo
+              </a>
+            </div>
           </div>
+        </footer>
 
-          {/* MENU RÁPIDO */}
-          <nav className="flex flex-wrap items-center gap-2 text-xs">
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/agenda"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Agenda
-            </Link>
-            <Link
-              href="/admin/propostas"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Propostas
-            </Link>
-            <Link
-              href="/admin/imprensa"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Imprensa
-            </Link>
-            <Link
-              href="/admin/galeria"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Galeria
-            </Link>
-            <Link
-              href="/admin/conteudo"
-              className="px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            >
-              Conteúdo
-            </Link>
-
-            {/* Logout sempre no canto */}
-            <Link
-              href="/admin/logout"
-              className="px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-semibold transition"
-            >
-              Sair
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* CONTEÚDO DAS PÁGINAS DO ADMIN */}
-      <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
-    </div>
+        {/* BOTÕES FLUTUANTES (Propostas, Agenda, Notícias, Imprensa, WhatsApp) */}
+        <FloatingActions />
+      </body>
+    </html>
   );
 }
