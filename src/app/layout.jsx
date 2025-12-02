@@ -1,5 +1,6 @@
 import "./globals.css";
 import Header from "../components/Header";
+import FloatingActions from "@/components/FloatingActions";
 
 export const metadata = {
   title: "Tabanez",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="pt-BR">
       <body className="bg-neutral-bg text-neutral-dark">
         <Header />
+        
 
         {/* CONTEÚDO PRINCIPAL */}
         <main className="min-h-[70vh] pt-24 pb-8">{children}</main>
