@@ -1,21 +1,22 @@
 import NewsClient from "./NewsClient";
 
-export const dynamic = "force-dynamic"; // continua impedindo erro de pre-render no Render
+export const dynamic = "force-dynamic";
 
 async function getNews() {
-  const res = await fetch("/api/noticias", {
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch("/api/noticias", {
+      cache: "no-store",
+    });
 
-  if (!res.ok) {
+    if (!res.ok) return [];
+
+    return await res.json();
+  } catch (e) {
     return [];
   }
-
-  return res.json();
 }
 
 export default async function Noticias() {
   const news = await getNews();
-
   return <NewsClient news={news} />;
 }
