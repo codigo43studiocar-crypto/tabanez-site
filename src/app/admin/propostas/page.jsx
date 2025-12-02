@@ -1,350 +1,331 @@
+// src/app/admin/propostas/page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
 
-export default function AdminPropostasPage() {
-  const [lista, setLista] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [editandoId, setEditandoId] = useState(null);
-  const [erro, setErro] = useState("");
+const CATEGORIAS_PADRAO = [
+  "Saúde",
+  "Educação",
+  "Segurança",
+  "Mobilidade",
+  "Infraestrutura",
+  "Ação Social",
+  "Juventude",
+  "Emprego e Renda",
+  "Outros",
+];
 
-  const [form, setForm] = useState({
-    titulo: "",
-    subtitulo: "",
+const PRIORIDADES = ["Alta", "Média", "Baixa"];
+
+function novaProposta() {
+  return {
+    id: Date.now(),
     categoria: "",
     prioridade: "Média",
-    destaque: false,
+    ordem: "",
+    titulo: "",
+    subtitulo: "",
+    itensTexto: "",
     publicado: true,
-    bullets: [""],
-  });
+    destaque: false,
+  };
+}
 
-  async function carregar() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/propostas");
-      const dados = await res.json();
-      setLista(dados || []);
-    } catch {
-      setErro("Erro ao carregar propostas.");
-    } finally {
-      setLoading(false);
-    }
-  }
+export default function AdminPropostasPage() {
+  const [propostas, setPropostas] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   useEffect(() => {
+    async function carregar() {
+      setCarregando(true);
+      try {
+        const res = await fetch("/api/propostas", { cache: "no-store" });
+        const json = await res.json();
+        setPropostas(json.propostas || []);
+      } catch (e) {
+        console.error(e);
+        setErro("Erro ao carregar propostas.");
+      } finally {
+        setCarregando(false);
+      }
+    }
     carregar();
   }, []);
 
-  function handleChange(e) {
-    const { name, value, type, checked } = e.target;
-
-    if (name.startsWith("bullet_")) {
-      const index = Number(name.replace("bullet_", ""));
-      setForm((prev) => {
-        const novos = [...prev.bullets];
-        novos[index] = value;
-        return { ...prev, bullets: novos };
-      });
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  function atualizarProposta(id, campo, valor) {
+    setPropostas((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p))
+    );
   }
 
-  function addBullet() {
-    setForm((prev) => ({ ...prev, bullets: [...prev.bullets, ""] }));
+  function adicionarProposta() {
+    setPropostas((prev) => [...prev, novaProposta()]);
   }
 
-  function removeBullet(i) {
-    setForm((prev) => ({
-      ...prev,
-      bullets: prev.bullets.filter((_, idx) => idx !== i),
-    }));
+  function removerProposta(id) {
+    if (!window.confirm("Remover esta proposta?")) return;
+    setPropostas((prev) => prev.filter((p) => p.id !== id));
   }
 
-  function limpar() {
-    setEditandoId(null);
-    setForm({
-      titulo: "",
-      subtitulo: "",
-      categoria: "",
-      prioridade: "Média",
-      destaque: false,
-      publicado: true,
-      bullets: [""],
-    });
-  }
-
-  async function salvar(e) {
-    e.preventDefault();
+  async function salvarTudo() {
     setErro("");
+    setSucesso("");
     setSalvando(true);
 
     try {
-      const metodo = editandoId ? "PUT" : "POST";
-      const body = { ...form, id: editandoId };
-
       const res = await fetch("/api/propostas", {
-        method: metodo,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ propostas }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setErro(data.error || "Erro ao salvar proposta.");
+        setErro(data.error || "Erro ao salvar propostas.");
         return;
       }
 
-      await carregar();
-      limpar();
-    } catch {
-      setErro("Erro ao comunicar com o servidor.");
+      setSucesso("Propostas salvas com sucesso.");
+    } catch (e) {
+      console.error(e);
+      setErro("Erro de comunicação com o servidor.");
     } finally {
       setSalvando(false);
     }
   }
 
-  function editar(item) {
-    setEditandoId(item.id);
-    setForm({
-      titulo: item.titulo || "",
-      subtitulo: item.subtitulo || "",
-      categoria: item.categoria || "",
-      prioridade: item.prioridade || "Média",
-      destaque: item.destaque || false,
-      publicado: item.publicado !== false,
-      bullets: item.bullets?.length ? item.bullets : [""],
-    });
-  }
-
-  async function excluir(id) {
-    if (!window.confirm("Deseja realmente excluir esta proposta?")) return;
-
-    try {
-      const res = await fetch("/api/propostas", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-
-      if (res.ok) {
-        setLista((prev) => prev.filter((p) => p.id !== id));
-      }
-    } catch {
-      setErro("Erro ao excluir proposta.");
+  const propostasFiltradas = propostas.filter((p) => {
+    if (
+      busca &&
+      !`${p.titulo} ${p.subtitulo}`.toLowerCase().includes(busca.toLowerCase())
+    ) {
+      return false;
     }
-  }
+    if (categoriaFiltro !== "Todas" && p.categoria !== categoriaFiltro) {
+      return false;
+    }
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white p-6">
-      <div className="max-w-5xl mx-auto space-y-10">
+    <div className="space-y-6 text-neutral-50">
+      <header className="space-y-1">
+        <p className="text-xs uppercase tracking-[0.25em] text-emerald-300">
+          Propostas
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold">
+          Propostas de Carlos Tabanez
+        </h1>
+        <p className="text-sm text-neutral-300 max-w-2xl">
+          Organize as propostas por categoria, prioridade e destaque. Os tópicos
+          são exibidos como lista de itens na página pública.
+        </p>
+      </header>
 
-        {/* TÍTULO */}
-        <header>
-          <h1 className="text-3xl font-bold">Propostas – Administração</h1>
-          <p className="text-gray-300 mt-1">
-            Adicione, edite e organize as propostas do Tabanez.
+      <section className="bg-neutral-900/80 border border-neutral-800 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 text-neutral-900">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="Buscar propostas (título ou subtítulo)"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
+          />
+          <select
+            value={categoriaFiltro}
+            onChange={(e) => setCategoriaFiltro(e.target.value)}
+            className="w-full md:w-48 rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
+          >
+            <option>Todas</option>
+            {CATEGORIAS_PADRAO.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        {erro && (
+          <p className="mb-3 text-sm text-red-500 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+            {erro}
           </p>
-        </header>
+        )}
+        {sucesso && (
+          <p className="mb-3 text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
+            {sucesso}
+          </p>
+        )}
 
-        {/* FORMULÁRIO */}
-        <section className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            {editandoId ? "Editar Proposta" : "Nova Proposta"}
-          </h2>
-
-          {erro && (
-            <p className="text-sm mb-4 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded">
-              {erro}
-            </p>
-          )}
-
-          <form onSubmit={salvar} className="grid gap-4 md:grid-cols-2">
-
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium">Título</label>
-              <input
-                type="text"
-                name="titulo"
-                value={form.titulo}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1"
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium">Subtítulo</label>
-              <input
-                type="text"
-                name="subtitulo"
-                value={form.subtitulo}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Categoria</label>
-              <input
-                type="text"
-                name="categoria"
-                value={form.categoria}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1"
-                placeholder="Segurança, Social..."
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Prioridade</label>
-              <select
-                name="prioridade"
-                value={form.prioridade}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1"
+        {carregando ? (
+          <p className="text-sm text-neutral-200">Carregando propostas...</p>
+        ) : (
+          <div className="space-y-4">
+            {propostasFiltradas.map((p, index) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-xl border border-neutral-200 px-4 py-4 space-y-3"
               >
-                <option>Alta</option>
-                <option>Média</option>
-                <option>Baixa</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Destaque</label>
-              <input
-                type="checkbox"
-                name="destaque"
-                checked={form.destaque}
-                onChange={handleChange}
-                className="ml-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Publicado</label>
-              <input
-                type="checkbox"
-                name="publicado"
-                checked={form.publicado}
-                onChange={handleChange}
-                className="ml-2"
-              />
-            </div>
-
-            {/* BULLETS */}
-            <div className="md:col-span-2 space-y-3">
-              <label className="text-sm font-medium">Tópicos (bullets)</label>
-
-              {form.bullets.map((b, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <input
-                    type="text"
-                    name={`bullet_${idx}`}
-                    value={b}
-                    onChange={handleChange}
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2"
-                    placeholder={`Tópico ${idx + 1}`}
-                  />
-                  {idx > 0 && (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-neutral-700">
+                    Proposta {index + 1}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-neutral-700">
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={!!p.publicado}
+                        onChange={(e) =>
+                          atualizarProposta(p.id, "publicado", e.target.checked)
+                        }
+                      />
+                      Publicado
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={!!p.destaque}
+                        onChange={(e) =>
+                          atualizarProposta(p.id, "destaque", e.target.checked)
+                        }
+                      />
+                      Destaque
+                    </label>
                     <button
                       type="button"
-                      onClick={() => removeBullet(idx)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-md"
+                      onClick={() => removerProposta(p.id)}
+                      className="text-red-500 hover:underline"
                     >
-                      ✕
+                      Remover
                     </button>
-                  )}
+                  </div>
                 </div>
-              ))}
 
+                <div className="grid md:grid-cols-4 gap-3 text-xs md:text-sm">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Categoria
+                    </label>
+                    <select
+                      value={p.categoria || ""}
+                      onChange={(e) =>
+                        atualizarProposta(p.id, "categoria", e.target.value)
+                      }
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
+                    >
+                      <option value="">Selecione...</option>
+                      {CATEGORIAS_PADRAO.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Prioridade
+                    </label>
+                    <select
+                      value={p.prioridade || "Média"}
+                      onChange={(e) =>
+                        atualizarProposta(p.id, "prioridade", e.target.value)
+                      }
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
+                    >
+                      {PRIORIDADES.map((pr) => (
+                        <option key={pr}>{pr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Ordem (opcional)
+                    </label>
+                    <input
+                      type="number"
+                      value={p.ordem || ""}
+                      onChange={(e) =>
+                        atualizarProposta(p.id, "ordem", e.target.value)
+                      }
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 text-xs md:text-sm">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Título da proposta
+                    </label>
+                    <input
+                      type="text"
+                      value={p.titulo || ""}
+                      onChange={(e) =>
+                        atualizarProposta(p.id, "titulo", e.target.value)
+                      }
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Subtítulo (texto abaixo do título)
+                    </label>
+                    <input
+                      type="text"
+                      value={p.subtitulo || ""}
+                      onChange={(e) =>
+                        atualizarProposta(p.id, "subtitulo", e.target.value)
+                      }
+                      className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-neutral-600">
+                    Itens da proposta (um por linha)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={p.itensTexto || ""}
+                    onChange={(e) =>
+                      atualizarProposta(p.id, "itensTexto", e.target.value)
+                    }
+                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-2 bg-white text-xs"
+                  />
+                  <p className="mt-1 text-[11px] text-neutral-500">
+                    Na página pública, cada linha será exibida como um item da
+                    lista com marcador.
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={adicionarProposta}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400"
+            >
+              + Nova proposta
+            </button>
+
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={addBullet}
-                className="px-4 py-2 bg-primary text-white rounded-md"
-              >
-                + Adicionar tópico
-              </button>
-            </div>
-
-            <div className="md:col-span-2 flex gap-3 mt-4">
-              <button
-                type="submit"
+                onClick={salvarTudo}
                 disabled={salvando}
-                className="px-4 py-2 bg-primary text-white rounded-md font-semibold"
+                className="px-5 py-2 rounded-full bg-amber-400 text-neutral-900 text-sm font-semibold hover:bg-amber-300 disabled:opacity-60"
               >
-                {salvando
-                  ? "Salvando..."
-                  : editandoId
-                  ? "Salvar alterações"
-                  : "Adicionar proposta"}
+                {salvando ? "Salvando..." : "Salvar todas as propostas"}
               </button>
-
-              {editandoId && (
-                <button
-                  type="button"
-                  onClick={limpar}
-                  className="px-4 py-2 border border-gray-400 rounded-md"
-                >
-                  Cancelar edição
-                </button>
-              )}
             </div>
-          </form>
-        </section>
-
-        {/* LISTA */}
-        <section className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-4">Propostas cadastradas</h2>
-
-          {loading ? (
-            <p className="text-neutral-700">Carregando...</p>
-          ) : lista.length === 0 ? (
-            <p className="text-neutral-700">Nenhuma proposta cadastrada.</p>
-          ) : (
-            <div className="space-y-3">
-              {lista.map((p) => (
-                <div
-                  key={p.id}
-                  className="border border-gray-200 rounded-lg bg-white p-4 flex flex-col md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-neutral-900">{p.titulo}</p>
-                    <p className="text-xs text-neutral-600">{p.categoria}</p>
-                    {p.destaque && (
-                      <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded mt-1 inline-block">
-                        Destaque
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 text-xs mt-2 md:mt-0">
-                    <button
-                      onClick={() => editar(p)}
-                      className="px-3 py-1 border border-primary text-primary rounded-md hover:bg-primary/10"
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      onClick={() => excluir(p.id)}
-                      className="px-3 py-1 border border-red-500 text-red-600 rounded-md hover:bg-red-50"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-      </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,14 +1,16 @@
+// src/app/admin/login/page.jsx
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function AdminLoginPage() {
-  const [usuario, setUsuario] = useState("");
-  const [senha, setSenha] = useState("");
-  const [carregando, setCarregando] = useState(false);
+export default function LoginPage() {
+  const router = useRouter();
+  const [password, setPassword] = useState("");
   const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     setErro("");
     setCarregando(true);
@@ -17,92 +19,61 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, senha }),
+        body: JSON.stringify({ password }),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setErro(data.error || "Usuário ou senha inválidos.");
+        setErro("Senha incorreta.");
         return;
       }
 
-      // Login ok -> redireciona para o painel
-      window.location.href = "/admin";
-    } catch {
-      setErro("Erro ao tentar fazer login. Tente novamente.");
+      router.push("/admin");
+    } catch (err) {
+      console.error(err);
+      setErro("Erro ao tentar entrar. Tente novamente.");
     } finally {
       setCarregando(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* LOGO / TÍTULO */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white">
-            Painel Administrativo
-          </h1>
-          <p className="text-sm text-gray-300 mt-1">
-            Acesso restrito à equipe do Tabanez.
+    <div className="min-h-screen bg-neutral-950 text-neutral-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-neutral-900 border border-neutral-700 rounded-2xl shadow-xl shadow-black/50 p-6">
+        <p className="text-[10px] tracking-[0.35em] uppercase text-amber-300">
+          Tabanez ▸ Painel
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold">Painel Administrativo</h1>
+        <p className="text-sm text-neutral-300 mb-6">
+          Digite a senha de acesso para gerenciar agenda, propostas e conteúdos.
+        </p>
+
+        {erro && (
+          <p className="mb-4 text-sm text-red-400 bg-red-950/50 border border-red-700 rounded-lg px-3 py-2">
+            {erro}
           </p>
-        </div>
+        )}
 
-        {/* CARD DE LOGIN */}
-        <div className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-4 text-neutral-900">
-            Entrar no painel
-          </h2>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Senha de acesso
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 text-neutral-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+            />
+          </div>
 
-          {erro && (
-            <p className="mb-3 text-sm bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded">
-              {erro}
-            </p>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-800">
-                Usuário
-              </label>
-              <input
-                type="text"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="Digite o usuário"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-800">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="Digite a senha"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={carregando}
-              className="w-full mt-2 px-4 py-2 bg-primary text-white rounded-md font-semibold hover:bg-primary-dark disabled:opacity-60"
-            >
-              {carregando ? "Entrando..." : "Entrar"}
-            </button>
-          </form>
-
-          <p className="mt-4 text-[11px] text-neutral-500 text-center">
-            As credenciais são definidas nas variáveis de ambiente do servidor
-            (ADMIN_USER / ADMIN_PASS).
-          </p>
-        </div>
+          <button
+            type="submit"
+            disabled={carregando || !password}
+            className="w-full py-2.5 rounded-lg bg-amber-400 text-neutral-900 font-semibold text-sm hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {carregando ? "Entrando..." : "Entrar no painel"}
+          </button>
+        </form>
       </div>
     </div>
   );

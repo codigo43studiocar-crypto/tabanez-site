@@ -14,6 +14,7 @@ export default function AdminConteudoPage() {
       try {
         const res = await fetch("/api/conteudo", { cache: "no-store" });
         if (!res.ok) throw new Error();
+
         const json = await res.json();
         setDados(json || {});
       } catch {
@@ -59,138 +60,116 @@ export default function AdminConteudoPage() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen bg-[#0b0f19] text-white p-6">
+      <div className="min-h-screen bg-neutral-900 text-neutral-200 p-6">
         Carregando...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white p-6">
+    <div className="min-h-screen bg-neutral-900 text-neutral-200 p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* TÍTULO */}
+
+        {/* TÍTULO DA PÁGINA */}
         <header>
-          <h1 className="text-3xl font-bold mb-1">Textos principais do site</h1>
-          <p className="text-gray-300 text-sm md:text-base">
-            Ajuste aqui os textos da página inicial e da biografia que aparecem para o público.
+          <h1 className="text-3xl font-bold mb-1">Editar textos principais</h1>
+          <p className="text-gray-300">
+            Ajuste os textos exibidos na página inicial, biografia e seções fixas.
           </p>
         </header>
 
-        {/* FORM GERAL */}
-        <section className="bg-white text-neutral-900 rounded-xl shadow border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Conteúdos fixos
-          </h2>
+        {/* FORMULÁRIO */}
+        <form
+          onSubmit={salvar}
+          className="bg-neutral-800 border border-neutral-700 shadow-lg rounded-lg p-6 space-y-10"
+        >
 
-          {erro && (
-            <p className="text-sm mb-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded">
-              {erro}
-            </p>
-          )}
-          {sucesso && (
-            <p className="text-sm mb-3 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded">
-              {sucesso}
-            </p>
-          )}
+          {/* HERO */}
+          <section>
+            <h2 className="text-lg font-semibold text-accent-yellow mb-4">
+              Hero – Página Inicial
+            </h2>
 
-          <form onSubmit={salvar} className="space-y-8">
-            {/* HERO HOME */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-neutral-900">
-                Hero – Página inicial
-              </h3>
-
               <div>
-                <label className="block text-sm font-medium text-neutral-800">
-                  Título principal
-                </label>
+                <label className="block mb-1 text-sm">Título</label>
                 <input
                   type="text"
                   value={dados?.home?.titulo || ""}
                   onChange={(e) =>
                     handleChange("home", "titulo", e.target.value)
                   }
-                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Ex.: TABANEZ"
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-neutral-100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-800">
-                  Subtítulo (frase de impacto)
-                </label>
+                <label className="block mb-1 text-sm">Subtítulo</label>
                 <textarea
                   rows={3}
                   value={dados?.home?.subtitulo || ""}
                   onChange={(e) =>
                     handleChange("home", "subtitulo", e.target.value)
                   }
-                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Ex.: Trabalho incansável pelo Distrito Federal..."
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-neutral-100"
                 />
               </div>
             </div>
+          </section>
 
-            <hr className="border-gray-200" />
+          {/* BIOGRAFIA INTRO */}
+          <section>
+            <h2 className="text-lg font-semibold text-accent-yellow mb-4">
+              Biografia – Introdução
+            </h2>
 
-            {/* BIOGRAFIA INTRO */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-neutral-900">
-                Biografia – Introdução
-              </h3>
+            <textarea
+              rows={3}
+              value={dados?.biografia?.intro || ""}
+              onChange={(e) =>
+                handleChange("biografia", "intro", e.target.value)
+              }
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-neutral-100"
+            />
+          </section>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-800">
-                  Parágrafo inicial da biografia
-                </label>
-                <textarea
-                  rows={4}
-                  value={dados?.biografia?.intro || ""}
-                  onChange={(e) =>
-                    handleChange("biografia", "intro", e.target.value)
-                  }
-                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Resumo inicial sobre quem é o Tabanez..."
-                />
-              </div>
-            </div>
+          {/* BIO COMPLETA */}
+          <section>
+            <h2 className="text-lg font-semibold text-accent-yellow mb-4">
+              Biografia Completa
+            </h2>
 
-            <hr className="border-gray-200" />
+            <textarea
+              rows={6}
+              value={dados?.biografia?.completa || ""}
+              onChange={(e) =>
+                handleChange("biografia", "completa", e.target.value)
+              }
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-neutral-100"
+            />
+          </section>
 
-            {/* BIO COMPLETA */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-neutral-900">
-                Biografia – Texto completo
-              </h3>
+          {/* MENSAGENS */}
+          {erro && (
+            <p className="text-red-400 bg-red-950 border border-red-800 px-3 py-2 rounded">
+              {erro}
+            </p>
+          )}
+          {sucesso && (
+            <p className="text-green-400 bg-green-950 border border-green-800 px-3 py-2 rounded">
+              {sucesso}
+            </p>
+          )}
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-800">
-                  Biografia completa
-                </label>
-                <textarea
-                  rows={8}
-                  value={dados?.biografia?.completa || ""}
-                  onChange={(e) =>
-                    handleChange("biografia", "completa", e.target.value)
-                  }
-                  className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Texto longo com a trajetória, história, conquistas..."
-                />
-              </div>
-            </div>
-
-            {/* BOTÃO SALVAR */}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={salvando}
-                className="px-5 py-2 bg-primary text-white rounded-md font-semibold hover:bg-primary-dark disabled:opacity-60"
-              >
-                {salvando ? "Salvando..." : "Salvar alterações"}
-              </button>
-            </div>
-          </form>
-        </section>
+          {/* BOTÃO SALVAR */}
+          <button
+            type="submit"
+            disabled={salvando}
+            className="px-6 py-2 bg-accent-yellow text-black font-semibold rounded-md hover:bg-yellow-400 transition disabled:opacity-50"
+          >
+            {salvando ? "Salvando..." : "Salvar alterações"}
+          </button>
+        </form>
       </div>
     </div>
   );
